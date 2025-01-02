@@ -1,0 +1,102 @@
+---
+title: "GEx"
+output: pdf_document
+date: "2024-11-07"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r chicago-global}
+# Load necessary library
+library(ggplot2)
+
+# Data: Annual average temperatures in Chicago (warmest and coldest years)
+years <- c(2012, 1921, 2023, 1931, 1998, 2021, 2020, 1953, 1954, 2017, 1875, 1893, 1873, 1904, 1892, 1888, 1917, 1883, 1985, 1895, 1885)
+temperatures <- c(54.5, 54.4, 54.0, 53.9, 53.5, 53.3, 53.3, 53.1, 52.9, 52.6, 45.1, 46.1, 46.4, 46.6, 46.6, 46.6, 46.7, 46.7, 47.0, 47.1, 47.1)
+
+# Create a data frame
+data <- data.frame(years, temperatures)
+
+# Fitting a linear model
+model <- lm(temperatures ~ years, data=data)
+summary(model)
+
+```
+```{r warmer vs colder}
+library(ggplot2)
+
+# Warmest years and temperatures
+warmest <- data.frame(
+  year = c(2012, 1921, 2023, 1931, 1998, 2021, 2020, 1953, 1954, 2017),
+  temperature = c(54.5, 54.4, 54.0, 53.9, 53.5, 53.3, 53.3, 53.1, 52.9, 52.6),
+  type = "Warmest"
+)
+
+# Coldest years and temperatures
+coldest <- data.frame(
+  year = c(1875, 1893, 1873, 1904, 1892, 1888, 1917, 1883, 1985, 1895),
+  temperature = c(45.1, 46.1, 46.4, 46.6, 46.6, 46.6, 46.7, 46.7, 47.0, 47.1),
+  type = "Coldest"
+)
+
+# Combine warmest and coldest data
+chicago_temps <- rbind(warmest, coldest)
+
+# Plot with custom colors for warmest (red) and coldest (blue)
+ggplot(chicago_temps, aes(x = year, y = temperature, color = type)) +
+  geom_point() +
+  geom_smooth(data = subset(chicago_temps, type == "Warmest"), method = "lm", se = TRUE, color = "red") +
+  geom_smooth(data = subset(chicago_temps, type == "Coldest"), method = "lm", se = TRUE, color = "blue") +
+  labs(title = "Top 10 Warmest and Coldest Years in Chicago",
+       x = "Year", y = "Temperature (°F)") +
+  scale_color_manual(values = c("Warmest" = "red", "Coldest" = "blue")) +
+  theme_minimal()
+
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+# Sample data, representing mid-points of each period (e.g., 2005 for 1991-2020)
+data <- data.frame(
+  year = c(1905, 1945, 1975, 2005),  # Midpoints of each period
+  DJF = c(26.42, 26.42, 26.23, 27.03),
+  MAM = c(27.41, 27.34, 27.28, 28.12),
+  JJA = c(27.14, 27.18, 27.08, 28.03),
+  SON = c(27.04, 26.89, 26.8, 27.56)
+)
+library(tidyr)
+long_data <- pivot_longer(data, cols = DJF:SON, names_to = "season", values_to = "temperature")
+
+# Assign each season a quarterly offset in a year (DJF -> Q1, MAM -> Q2, etc.)
+long_data$quarter <- match(long_data$season, c("DJF", "MAM", "JJA", "SON"))
+
+# Calculate the date for each entry, assuming each period represents a year in the middle of the 30-year range
+long_data$date <- as.Date(paste(long_data$year, long_data$quarter * 3 - 1, "01", sep = "-"), "%Y-%m-%d")
+library(zoo)
+# Sort by date and create a time series
+long_data <- long_data[order(long_data$date), ]
+ts_data <- zoo(long_data$temperature, order.by = long_data$date)
+time <- as.numeric(time(ts_data))  # Convert dates to numeric time
+model <- lm(ts_data ~ time)
+summary(model)
+library(ggplot2)
+ggplot(long_data, aes(x = date, y = temperature)) +
+  geom_line() +
+  geom_smooth(method = "lm", se = TRUE, color = "red") +
+  labs(title = "Observed Average Seasonal Mean Temperature in Singapore (Quarterly)",
+       x = "Year", y = "Temperature (°C)")
+
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
