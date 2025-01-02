@@ -49,7 +49,7 @@ Initially, the project examined weather derivatives as a potential solution to h
    bash
    git clone https://github.com/IsaacNgSheng/climate-stabilization-agriculture.git
 2. Navigate to the repository:
-   git clone https://github.com/IsaacNgSheng/climate-stabilization-agriculture.git
+   cd climate-stabilization-agriculture
 3. Install dependencies:
    - For Python: pip install -r requirements.txt
    - For R: Install necessary packages listed in code.Rmd
